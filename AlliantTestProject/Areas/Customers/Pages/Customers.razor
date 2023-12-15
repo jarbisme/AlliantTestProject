@@ -1,0 +1,84 @@
+﻿@page "/customers"
+
+@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@using AlliantTestProject.Shared
+@inject CustomerService CustomerService;
+@inject NavigationManager   NavigationManager;
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex">
+            <h1>Customers</h1>
+            <button class="btn btn-warning ms-auto btn-main" @onclick="CreateNewCustomer">New Customer</button>
+        </div>
+
+        @if (CustomerService.Customers == null)
+        {
+            <text>Loading...</text>
+        }
+        else if (!CustomerService.Customers.Any())
+        {
+            <h4>No customers created</h4>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Customer No.</th>
+                        <th scope="col">Customer Name</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in CustomerService.Customers)
+                    {
+                        <tr>
+                            <td>@customer.CustomerNumber</td>
+                            <td>@customer.CustomerName</td>
+                            <td>@customer.GetPhoneNumberFormatted()</td>
+                            <td>@customer.Email</td>
+                            <td>@(customer.IsActive ? "Active" : "Inactive")</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm"
+                                        @onclick="(() => ShowCustomer(customer.CustomerId))">
+                                    <i class="oi oi-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-secondary" role="alert">
+            You have to LogIn to see this content.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CustomerService.LoadCustomer();
+    } 
+
+    void ShowCustomer(int id)
+    {
+        NavigationManager.NavigateTo($"customer/{id}");
+    }
+
+    void CreateNewCustomer()
+    {
+        NavigationManager.NavigateTo("customer");
+    }
+
+    
+}

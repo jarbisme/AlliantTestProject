@@ -1,0 +1,141 @@
+﻿@page "/item"
+@page "/item/{itemId:int}"
+
+@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@inject ItemsService ItemsService
+
+@if (ItemId == null)
+{
+    <h1>Create a new Item</h1>
+}
+else
+{
+    <h1>Edit Item</h1>
+}
+
+<div class="alert alert-secondary mt-4">
+    <strong>Provide the details to create/modify a customer.</strong>
+    <br />All the fields are required.
+</div>
+
+<div class="container">
+
+    <EditForm Model=item OnValidSubmit="OnSave">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        @if (isError)
+        {
+            <ul class="validation-errors">
+                <li class="validation-message">@errorMsg</li>
+            </ul>
+        }
+        <div class="form-row">
+            <div class="form-group col-sm-2">
+                <label for="itemNumber">Item No. *</label>
+                <InputNumber id="itemNumber" class="form-control" placeholder="132" @bind-Value="item.ItemNumber" />
+            </div>
+            <div class="form-group col-sm-4">
+                <label for="description">Description *</label>
+                <InputText id="description" class="form-control" placeholder="Item description" @bind-Value="item.Description" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="defaultPrice">Default Price *</label>
+            <InputNumber id="defaultPrice" class="form-control" placeholder="0.00" @bind-Value="item.DefaultPrice" />
+        </div>
+        <div class="form-group">
+            <label for="itemCategory">Item Category (Single letter) *</label>
+            <InputText id="itemCategory" class="form-control" placeholder="A" @bind-Value="item.ItemCategory" />
+        </div>
+        <div class="form-group">
+            <div class="form-check">
+                <InputCheckbox id="isActive" class="form-check-input" type="checkbox" @bind-Value="item.IsActive" />
+                <label class="form-check-label" for="isActive">
+                    Active
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@btnText</button>
+        @if (ItemId != null)
+        {
+            <button type="button" class="btn btn-danger" @onclick="DeleteItem">Delete Item</button>
+        }
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int? ItemId { get; set; }
+
+    private string btnText = string.Empty;
+
+    private Item item = new Item();
+
+    private bool isError = false;
+    private string errorMsg = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        btnText = ItemId == null ? "Save New Item" : "Update Item";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ItemId != null)
+        {
+            item = await ItemsService.GetItem((int)ItemId);
+        }
+    }
+
+    async Task OnSave()
+    {
+        isError = false;
+        errorMsg = "";
+        if (ItemId == null)
+        {
+            try
+            {
+                await ItemsService.CreateItem(item);
+            }
+            catch (Exception ex)
+            {
+                isError = true;
+                if (ex.Message.Contains("Cannot insert duplicate key row in object") && ex.Message.Contains("ItemNumber"))
+                {
+                    errorMsg += $"The Item Number ({item.ItemNumber}) is already in use";
+                }
+
+                if (ex.Message.Contains("String or binary data would be truncated in table") && ex.Message.Contains("ItemCategory"))
+                {
+                    errorMsg += $"The Item Category ({item.ItemCategory}) is not a valid category";
+                }
+            }
+        }
+        else
+        {
+            try
+            {
+                await ItemsService.UpdateItem(item.ItemId, item);
+            }
+            catch (Exception ex)
+            {
+                isError = true;
+                if (ex.Message.Contains("Cannot insert duplicate key row in object") && ex.Message.Contains("ItemNumber"))
+                {
+                    errorMsg = $"The Item Number ({item.ItemNumber}) is already in use";
+                }
+
+                if (ex.Message.Contains("String or binary data would be truncated in table") && ex.Message.Contains("ItemCategory"))
+                {
+                    errorMsg += $"The Item Category ({item.ItemCategory}) is not a valid category";
+                }
+            }
+        }
+    }
+
+    async Task DeleteItem()
+    {
+        await ItemsService.DeleteItem(item.ItemId);
+    }
+}

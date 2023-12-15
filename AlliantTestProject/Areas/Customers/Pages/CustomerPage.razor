@@ -1,0 +1,130 @@
+﻿@page "/customer"
+@page "/customer/{customerId:int}"
+
+@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@inject CustomerService CustomerService
+
+@if (CustomerId == null)
+{
+    <h1>Create a new Customer</h1>
+}
+else
+{
+    <h1>Edit Customer</h1>
+}
+
+<div class="alert alert-secondary mt-4">
+    <strong>Provide the details to @(CustomerId == null ? "Create" : "Modify") a customer.</strong>
+    <br/>All the fields are required.
+</div>
+
+<div class="container-fluid">
+
+    <EditForm Model=customer OnValidSubmit="OnSave">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        @if (isError)
+        {
+            <ul class="validation-errors">
+                <li class="validation-message">@errorMsg</li>
+            </ul>
+        }
+        <div class="form-row">
+            <div class="form-group col-sm-2">
+                <label for="customerNumber">Customer No.</label>
+                <InputNumber id="customerNumber" class="form-control" placeholder="132" @bind-Value="customer.CustomerNumber" />
+            </div>
+            <div class="form-group col-sm-4">
+                <label for="customerName">Name</label>
+                <InputText id="customerName" class="form-control" placeholder="Full name" @bind-Value="customer.CustomerName" />
+            </div>
+        </div>
+        <div class="form-group col-sm-4">
+            <label for="email">Email</label>
+            <InputText id="email" type="email" class="form-control" placeholder="name@domain.com" @bind-Value="customer.Email" />
+        </div>
+        <div class="form-group col-sm-4">
+            <label for="phone">Phone</label>
+            <InputText id="phone" class="form-control" placeholder="123456789" @bind-Value="customer.Phone" />
+        </div>
+        <div class="form-group col-sm-4">
+            <div class="form-check">
+                <InputCheckbox id="isActive" class="form-check-input" type="checkbox" @bind-Value="customer.IsActive" />
+                <label class="form-check-label" for="isActive">
+                    Active
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">@btnText</button>
+        @if (CustomerId != null)
+        {
+            <button type="button" class="btn btn-danger" @onclick="DeleteCustomer">Delete Customer</button>
+        }
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int? CustomerId { get; set; }
+
+    private string btnText = string.Empty;
+
+    private Customer customer = new Customer();
+
+    private bool isError = false;
+    private string errorMsg = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        btnText = CustomerId == null ? "Save New Customer" : "Update Customer";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CustomerId != null)
+        {
+            customer = await CustomerService.GetCustomer((int)CustomerId);
+        }
+    }
+
+    async Task OnSave()
+    {
+        isError = false;
+        if (CustomerId == null)
+        {
+            try
+            {
+                await CustomerService.CreateCustomer(customer);
+            }
+            catch (Exception ex)
+            {
+                isError = true;
+                if (ex.Message.Contains("Cannot insert duplicate key row in object") && ex.Message.Contains("CustomerNumber"))
+                {
+                    errorMsg = $"The Customer Number ({customer.CustomerNumber}) is already in use"; 
+                }
+            }
+        }
+        else
+        {
+            try
+            {
+                await CustomerService.UpdateCustomer(customer.CustomerId, customer);
+            }
+            catch (Exception ex)
+            {
+                isError = true;
+                if (ex.Message.Contains("Cannot insert duplicate key row in object") && ex.Message.Contains("CustomerNumber"))
+                {
+                    errorMsg = $"The Customer Number ({customer.CustomerNumber}) is already in use";
+                }
+            }
+        }
+    }
+
+    async Task DeleteCustomer()
+    {
+        await CustomerService.DeleteCustomer(customer.CustomerId);
+    }
+}

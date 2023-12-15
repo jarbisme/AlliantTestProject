@@ -1,0 +1,91 @@
+﻿@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@using System.ComponentModel.DataAnnotations
+@inject CustomerItemsService CustomerItemsService
+
+<div class="container-fluid report-container">
+    <h2>Customer Items</h2>
+    <div class="container-fluid">
+        <EditForm Model="FormModel" OnValidSubmit="GenerateReport">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <InputNumber placeholder="Start Item Number" @bind-Value="FormModel.startItemNumber" />
+            <InputNumber placeholder="Start Item Number" @bind-Value="FormModel.endItemNumber" />
+            <button type="submit" class="btn btn-primary btn-sm">Generate</button>
+        </EditForm>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Customer No.</th>
+                <th scope="col">Item No.</th>
+                <th scope="col">Description</th>
+                <th scope="col">Price</th>
+                <th scope="col">Quantity</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (customerItems == null)
+            {
+                <tr>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                </tr>
+            }
+            else if (!customerItems.Any())
+            {
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var customerItem in customerItems)
+                {
+                    <tr>
+                        <td>@customerItem.Customer.CustomerNumber</td>
+                        <td>@customerItem.Item.ItemNumber</td>
+                        <td>@customerItem.Item.Description</td>
+                        <td>@customerItem.Price.ToString("C")</td>
+                        <td>@customerItem.Quantity</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    public CustomerItemsRange FormModel { get; set; } = new CustomerItemsRange();
+
+    List<CustomerItem> customerItems = new List<CustomerItem>();
+
+    async void GenerateReport()
+    {
+        // if (startItemNumber <= 0 || endItemNumber <= 0)
+        // {
+        //     // error here
+        //     return;
+        // }
+
+        customerItems = await CustomerItemsService.GetCustomerItemsRange(FormModel.startItemNumber, FormModel.endItemNumber);
+        StateHasChanged();
+    }
+
+    public class CustomerItemsRange
+    {
+        [Required, Range(1, 9999999999999)]
+        public int startItemNumber { get; set; }
+        [Required, Range(1, 9999999999999)]
+        public int endItemNumber { get; set; }
+    }
+}

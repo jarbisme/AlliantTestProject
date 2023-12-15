@@ -1,0 +1,79 @@
+﻿@page "/items"
+
+@using AlliantTestProject.Data.Services
+@inject ItemsService ItemsService
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex">
+            <h1>Items</h1>
+            <button class="btn btn-warning ms-auto btn-main" @onclick="CreateNewItem">New Item</button>
+        </div>
+
+        @if (ItemsService.Items == null)
+        {
+            <text>Loading...</text>
+        }
+        else if (!ItemsService.Items.Any())
+        {
+            <h4>No customers created</h4>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Item No.</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Default Price</th>
+                        <th scope="col">Item Category</th>
+                        <th scope="col">Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ItemsService.Items)
+                    {
+                        <tr>
+                            <td>@item.ItemNumber</td>
+                            <td>@item.Description</td>
+                            <td>@item.DefaultPrice.ToString("C")</td>
+                            <td>@item.ItemCategory</td>
+                            <td>@(item.IsActive ? "Active" : "Inactive")</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm"
+                                        @onclick="(() => ShowItem(item.ItemId))">
+                                    <i class="oi oi-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-secondary" role="alert">
+            You have to LogIn to see this content.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ItemsService.LoadItems();
+    }
+
+    void ShowItem(int id)
+    {
+        NavigationManager.NavigateTo($"item/{id}");
+    }
+
+    void CreateNewItem()
+    {
+        NavigationManager.NavigateTo("item");
+    }
+}

@@ -1,0 +1,78 @@
+﻿@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@inject CustomerService CustomerService
+
+<div class="container-fluid report-container">
+    <h2>Customer Most Expensive Items</h2>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Customer No.</th>
+                <th scope="col">Customer Name</th>
+                <th scope="col">Item No.</th>
+                <th scope="col">Item Description</th>
+                <th scope="col">Price</th>
+                <th scope="col">Quantity</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Customers == null)
+            {
+                <tr>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                    <td>Loading...</td>
+                </tr>
+            }
+            else if (!Customers.Any())
+            {
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var customer in Customers)
+                {
+                    <tr>
+                        <td>@customer.CustomerNumber</td>
+                        <td>@customer.CustomerName</td>
+                        @if (customer.CustomerItems == null || !customer.CustomerItems.Any())
+                        {
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        }
+                        else
+                        {
+                            <td>@customer.CustomerItems.First().Item.ItemNumber</td>
+                            <td>@customer.CustomerItems.First().Item.Description</td>
+                            <td>@customer.CustomerItems.First().Price.ToString("C")</td>
+                            <td>@customer.CustomerItems.First().Quantity</td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    public List<Customer> Customers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Customers = await CustomerService.GetCustomersWithExpensiveItems();
+    }
+}

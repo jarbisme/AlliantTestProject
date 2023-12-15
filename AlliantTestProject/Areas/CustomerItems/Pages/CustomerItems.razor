@@ -1,0 +1,162 @@
+﻿@page "/customeritems"
+@page "/customeritems/{customerId:int}"
+
+@using AlliantTestProject.Data.Models
+@using AlliantTestProject.Data.Services
+@inject CustomerItemsService CustomerItemsService
+@inject NavigationManager NavigationManager
+@inject CustomerService CustomerService
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex">
+            <h1>Customers Items</h1>
+            <button class="btn btn-warning ms-auto btn-main" @onclick="CreateNewCustomerItem" disabled="@(!(selectedCustomerId > 0))">Add Item</button>
+        </div>
+
+        @if (customers == null)
+        {
+            <text>Loading...</text>
+        }
+        else if (!customers.Any())
+        {
+            <h4>No customers created</h4>
+        }
+        else
+        {
+            <div class="container">
+                <div class="mr-2">
+                    <strong>Customer</strong>
+                </div>
+                <select @bind="SelectedCustomerId">
+                    <option value="0">Select a Customer</option>
+                    @foreach (var customer in customers)
+                    {
+                        <option value="@customer.CustomerId">@customer.CustomerName</option>
+                    }
+                </select>
+            </div>
+
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Item Number</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (customerItems == null)
+                    {
+                        <tr>
+                            <td>Loading...</td>
+                            <td>Loading...</td>
+                            <td>Loading...</td>
+                            <td>Loading...</td>
+                            <td>Loading...</td>
+                            <td>Loading...</td>
+                        </tr>
+                    }
+                    else if (!customerItems.Any())
+                    {
+                        <tr>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var customerItem in customerItems)
+                        {
+                            <tr>
+                                <td>@customerItem.Item.ItemNumber</td>
+                                <td>@customerItem.Item.Description</td>
+                                <td>@customerItem.Quantity</td>
+                                <td>@customerItem.Price.ToString("C")</td>
+                                <td>@(customerItem.IsActive ? "Active" : "Inactive")</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm"
+                                            @onclick="(() => ShowCustomerItem(customerItem.CustomerItemId))">
+                                        <i class="oi oi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+        }
+
+
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-secondary" role="alert">
+            You have to LogIn to see this content.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+
+    [Parameter] public int? CustomerId { get; set; }
+
+    private int selectedCustomerId;
+    public int SelectedCustomerId
+    {
+        get { return selectedCustomerId; }
+        set
+        {
+            selectedCustomerId = value;
+            LoadCustomerItems(value);
+        }
+    }
+
+    List<Customer> customers;
+    List<CustomerItem>? customerItems;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await CustomerService.GetAllCustomers();
+
+        if (CustomerId == null)
+        {
+            customerItems = new List<CustomerItem>();
+        }
+        else
+        {
+            selectedCustomerId = (int)CustomerId;
+            LoadCustomerItems(selectedCustomerId);
+        }
+    }
+
+    void ShowCustomerItem(int id)
+    {
+        NavigationManager.NavigateTo($"customeritem/{selectedCustomerId}/{id}");
+    }
+
+    void CreateNewCustomerItem()
+    {
+        NavigationManager.NavigateTo($"customeritem/{selectedCustomerId}");
+    }
+
+    async void LoadCustomerItems(int id)
+    {
+        Console.WriteLine("Load Customer Items for id " + id);
+        customerItems = new List<CustomerItem>();
+        customerItems = await CustomerItemsService.GetCustomerItems(id);
+        StateHasChanged();
+        Console.WriteLine($"Done!!! CustomerItems: {customerItems.Count}");
+    }
+}
