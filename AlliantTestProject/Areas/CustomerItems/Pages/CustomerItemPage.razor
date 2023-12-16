@@ -30,7 +30,7 @@ else
     <div class="form-row">
         <div class="form-group col-sm-2">
             <label for="itemId">Item</label>
-            <select id="itemId" @bind="customerItem.ItemId">
+            <select id="itemId" @onchange="HandleSelectedItemOnHange">
                 <option>Select an Item</option>
                 @foreach (var item in items)
                 {
@@ -94,6 +94,24 @@ else
         }
 
         items = await ItemsService.GetAllItems();
+    }
+
+    void HandleSelectedItemOnHange(ChangeEventArgs e)
+    {
+        try
+        {
+            var selectedItem = items.Find(i => i.ItemId == Int32.Parse( e.Value.ToString()));
+            if (selectedItem != null)
+            {
+                customerItem.ItemId = selectedItem.ItemId;
+                customerItem.Price = selectedItem.DefaultPrice;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            
+        }
     }
 
     async Task OnSave()
