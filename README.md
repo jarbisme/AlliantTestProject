@@ -10,6 +10,10 @@
 ## How to run the app
 Once you have downloaded the code, whether by cloning the repository or by downloading the .zip, open the folder in **Visual Studio 2022** or **Visual Studio Code** and press the key **F5** to run the project.
 
+The database will be populated with some data the app runs for the first time.
+
+**NOTE:** To use the app you will need to register an account. You can do that by clicking the "Register" button on the top right.
+
 ## Project Documentation
 
 ### Project Structure
